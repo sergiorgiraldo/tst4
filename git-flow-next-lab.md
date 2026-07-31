@@ -6,41 +6,6 @@ Each phase is: **run → inspect → answer the checkpoint.** The checkpoints ar
 
 ---
 
-## 0. Aliases
-
-| Written here | Runs |
-|---|---|
-| `g` | `git` |
-| `g ft …` | `git flow feature …` |
-| `g rel …` | `git flow release …` |
-| `git flow …` | spelled out — `init`, `config`, `overview`, `hotfix`, `support`, shorthands |
-
-### Settle what `next` is first
-
-Your alias is `next = flow next`. I couldn't confirm a `next` subcommand in the CLI reference — the documented set is `init`, `config`, `overview`, `version`, `completion`, the per-type commands (`start finish publish list update delete rename checkout track`), and the shorthands (`finish update rebase rename publish delete`). No `next`. But git-flow.sh's workflow pages do print `git flow next update` in prose.
-
-```bash
-git flow next --help
-git flow next update --help
-```
-
-- **Works** → `g next` is your generic entry point; use it wherever this doc writes `git flow`.
-- **Errors** → it was marketing copy. Add real aliases:
-
-```bash
-g config --global alias.fl flow
-g config --global alias.hf 'flow hotfix'
-g config --global alias.sup 'flow support'
-```
-
-Plus the one you'll lean on constantly:
-
-```bash
-g config --global alias.lg "log --graph --oneline --decorate --all"
-```
-
----
-
 ## 1. Setup
 
 ```bash
@@ -71,17 +36,17 @@ Since it's on real GitHub, you get a bonus the sandbox wouldn't give you — `pu
 git-flow-next hardcodes no model. A workflow is config: **base branches** (long-lived) + **topic branch types** (short-lived), each with a parent and merge strategies.
 
 ```bash
-git flow init --preset=classic --defaults
+g fl init --preset=classic --defaults
 # if your default branch is master:
-# git flow init --preset=classic --defaults --main=master
+# g fl init --preset=classic --defaults --main=master
 ```
 
 Three views of the same truth:
 
 ```bash
-git flow config list                   # branch hierarchy
-git flow overview                      # + live state: ahead/behind, health
-git flow overview --verbose
+g fl config list                   # branch hierarchy
+g fl overview                      # + live state: ahead/behind, health
+g fl overview --verbose
 g config --get-regexp '^gitflow\.'     # raw storage
 sed -n '/\[gitflow/,$p' .git/config
 ```
@@ -104,7 +69,7 @@ g push -u origin develop
 Worth reading now, used later:
 
 ```bash
-git flow init --help
+g fl init --help
 # --preset=classic|github|gitlab  --custom  --defaults  --force  --no-create-branches
 # --main= --develop= --feature= --release= --hotfix= --tag=
 # scope: --local (default) | --global | --system | --file=path
@@ -138,7 +103,7 @@ Start from an arbitrary point:
 
 ```bash
 g ft start experiment main         # third arg = base commit/tag/branch
-git flow config list               # note: still parented to develop for finish
+g fl config list               # note: still parented to develop for finish
 g ft delete experiment --force
 ```
 
@@ -155,7 +120,7 @@ Now check GitHub — the branch is there. Simulate a teammate with a second clon
 
 ```bash
 cd .. && git clone <same-github-url> playground-teammate && cd playground-teammate
-git flow init --preset=classic --defaults
+g fl init --preset=classic --defaults
 g ft track login
 g branch -vv
 cd ../playground
@@ -184,9 +149,9 @@ Then pull it down:
 
 ```bash
 g ft checkout login
-git flow update                    # shorthand, current branch
+g fl update                    # shorthand, current branch
 g ft update login --rebase         # force rebase over configured strategy
-git flow rebase                    # alias for: update --rebase
+g fl rebase                    # alias for: update --rebase
 ```
 
 ### 3.4 rename / delete / finish
@@ -207,13 +172,13 @@ Variants worth trying on later features:
 g ft finish X --keep --keeplocal --keepremote
 g ft finish X --no-fetch
 g ft finish X --force              # bypasses the remote-sync check
-git flow finish                    # shorthand, current branch
+g fl finish                    # shorthand, current branch
 ```
 
 ### Checkpoint
 1. Two merge directions — which config key governs each? (`upstreamstrategy` vs `downstreamstrategy`)
 2. Why does `finish` fetch by default, and what does it refuse if your branch is *behind* its remote?
-3. `git flow update` vs `git flow rebase`?
+3. `g fl update` vs `g fl rebase`?
 
 ---
 
@@ -274,8 +239,8 @@ g config gitflow.feature.finish.squash true
 g config gitflow.feature.finish.mergemessage "feat: merge %b into %p"
 g config gitflow.feature.start.fetch true
 
-git flow config list
-git flow config edit topic feature --upstream-strategy=merge   # same thing, via the command
+g fl config list
+g fl config edit topic feature --upstream-strategy=merge   # same thing, via the command
 ```
 
 Precedence, high → low: **CLI flags** → `gitflow.<type>.<command>.*` → `gitflow.branch.<type>.*`. Prove it rather than trusting it:
@@ -299,7 +264,7 @@ g config --unset gitflow.feature.finish.squash
 Release branches are special twice over: `startpoint` ≠ `parent`, and `tag = true`.
 
 ```bash
-git flow config list | grep -A5 release
+g fl config list | grep -A5 release
 g config gitflow.branch.release.tagprefix v
 ```
 
@@ -358,9 +323,9 @@ g rel finish 1.2.0 -m "Release 1.2.0"
 This is the phase that justifies the tool over git-flow-avh: the classic failure is a hotfix reaching production but never reaching develop.
 
 ```bash
-git flow hotfix start 1.2.1 v1.2.0     # start from the released tag
+g fl hotfix start 1.2.1 v1.2.0     # start from the released tag
 mk "fix: critical null pointer"
-git flow hotfix finish 1.2.1 -m "Hotfix 1.2.1"
+g fl hotfix finish 1.2.1 -m "Hotfix 1.2.1"
 
 g lg
 g tag -l
@@ -372,9 +337,9 @@ Harder case — hotfix while a release is open:
 
 ```bash
 g rel start 1.3.0
-git flow hotfix start 1.2.2 v1.2.1
+g fl hotfix start 1.2.2 v1.2.1
 mk "fix: another urgent one"
-git flow hotfix finish 1.2.2 -m "Hotfix 1.2.2"
+g fl hotfix finish 1.2.2 -m "Hotfix 1.2.2"
 
 g rel update 1.3.0                 # pull the hotfix into the open release
 g log --oneline release/1.3.0 -5
@@ -419,7 +384,7 @@ Practice both exits:
 
 ```bash
 g status
-git flow overview                  # git-flow reports the operation state
+g fl overview                  # git-flow reports the operation state
 cat conflict.txt
 
 # path A: bail out
@@ -445,21 +410,21 @@ g lg
 Long-lived maintenance lines for older versions.
 
 ```bash
-git flow support start 1.2.x v1.2.2
+g fl support start 1.2.x v1.2.2
 g branch --show-current
 mk "fix: backport for 1.2.x users"
-git flow support list
-git flow support publish
+g fl support list
+g fl support publish
 g config gitflow.support.finish.keep true
 ```
 
 A topic type parented onto a support branch:
 
 ```bash
-git flow config add topic backport support/1.2.x --prefix=backport/ --tag=false
-git flow backport start fix-a
+g fl config add topic backport support/1.2.x --prefix=backport/ --tag=false
+g fl backport start fix-a
 mk "fix: backported"
-git flow backport finish fix-a
+g fl backport finish fix-a
 g lg
 ```
 
@@ -473,16 +438,16 @@ Why does a support branch have no meaningful "finish"?
 Two ways to run these. Re-initialising in place is fine on a playground and shows you what `--force` does to existing config; separate clones keep each experiment clean. Do the first one in place, then decide.
 
 ```bash
-git flow init --preset=github --defaults --force
-git flow config list
+g fl init --preset=github --defaults --force
+g fl config list
 g ft start quick && mk "feat: straight to main" && g ft finish quick
 g lg
 ```
 
 ```bash
-git flow init --preset=gitlab --defaults --force
-git flow config list               # production ← staging ← main
-git flow overview
+g fl init --preset=gitlab --defaults --force
+g fl config list               # production ← staging ← main
+g fl overview
 g ft start envtest && mk "feat: env test" && g ft finish envtest
 g log --oneline main -2; g log --oneline staging -2; g log --oneline production -2
 ```
@@ -490,46 +455,46 @@ g log --oneline main -2; g log --oneline staging -2; g log --oneline production 
 Build one from scratch:
 
 ```bash
-git flow init --custom --force
+g fl init --custom --force
 
-git flow config add base production
-git flow config add base staging production --auto-update=true
-git flow config add base develop staging --auto-update=true
+g fl config add base production
+g fl config add base staging production --auto-update=true
+g fl config add base develop staging --auto-update=true
 
-git flow config add topic feature develop --prefix=feat/
-git flow config add topic bugfix  develop --prefix=bug/  --upstream-strategy=squash
-git flow config add topic epic    develop --prefix=epic/ --downstream-strategy=rebase
-git flow config add topic release staging --prefix=release/ --tag=true
-git flow config add topic hotfix  production --prefix=hotfix/ --tag=true
+g fl config add topic feature develop --prefix=feat/
+g fl config add topic bugfix  develop --prefix=bug/  --upstream-strategy=squash
+g fl config add topic epic    develop --prefix=epic/ --downstream-strategy=rebase
+g fl config add topic release staging --prefix=release/ --tag=true
+g fl config add topic hotfix  production --prefix=hotfix/ --tag=true
 
-git flow config list
-git flow overview --format=json | head -40
+g fl config list
+g fl overview --format=json | head -40
 ```
 
 Exercise the full CRUD — note that `rename base` touches the actual branch, not just config:
 
 ```bash
-git flow config edit topic feature --upstream-strategy=rebase
-git flow config edit base staging --auto-update=false
-git flow config rename topic epic initiative
-git flow config rename base develop integration     # renames config AND the git branch
-git flow config delete topic initiative             # config only; branches survive
-git flow config delete base staging                 # branch survives, management stops
-git flow config list
+g fl config edit topic feature --upstream-strategy=rebase
+g fl config edit base staging --auto-update=false
+g fl config rename topic epic initiative
+g fl config rename base develop integration     # renames config AND the git branch
+g fl config delete topic initiative             # config only; branches survive
+g fl config delete base staging                 # branch survives, management stops
+g fl config list
 ```
 
 Watch validation refuse bad input:
 
 ```bash
-git flow config add base loopy loopy         # circular parent
-git flow config add topic bad nonexistent    # missing parent
-git flow config add topic weird develop --prefix='bad prefix/'
+g fl config add base loopy loopy         # circular parent
+g fl config add topic bad nonexistent    # missing parent
+g fl config add topic weird develop --prefix='bad prefix/'
 ```
 
 Then get back to classic:
 
 ```bash
-git flow init --preset=classic --defaults --force
+g fl init --preset=classic --defaults --force
 ```
 
 ### Checkpoint
@@ -618,10 +583,10 @@ Filter semantics to internalise: missing → original value used; non-executable
 ## 11. Tooling and AVH compatibility
 
 ```bash
-git flow overview --format=json
-git flow overview --format=yaml --no-color
-git flow --verbose feature list       # see the underlying git commands
-git flow completion zsh > /tmp/_git-flow
+g fl overview --format=json
+g fl overview --format=yaml --no-color
+g fl --verbose feature list       # see the underlying git commands
+g fl completion zsh > /tmp/_git-flow
 ```
 
 Simulate a legacy repo to see runtime translation — it reads avh keys without rewriting them:
@@ -630,7 +595,7 @@ Simulate a legacy repo to see runtime translation — it reads avh keys without 
 g config gitflow.branch.master main
 g config gitflow.prefix.feature feature/
 g config gitflow.prefix.versiontag v
-git flow config list                  # translated at runtime
+g fl config list                  # translated at runtime
 g config --get-regexp '^gitflow\.'    # old keys untouched
 ```
 
@@ -662,9 +627,9 @@ g branch | grep -E 'feature/|release/|hotfix/|support/' | xargs -r g branch -D
 
 ```bash
 # setup
-git flow init --preset=classic --defaults
-git flow config list
-git flow overview
+g fl init --preset=classic --defaults
+g fl config list
+g fl overview
 
 # feature
 g ft start NAME [base]
@@ -684,18 +649,18 @@ g rel update 1.2.0
 g rel finish 1.2.0 -m "Release 1.2.0" [--tag|--notag|--sign|--tagname X]
 
 # hotfix / support
-git flow hotfix start 1.2.1 v1.2.0
-git flow hotfix finish 1.2.1 -m "Hotfix 1.2.1"
-git flow support start 1.2.x v1.2.0
+g fl hotfix start 1.2.1 v1.2.0
+g fl hotfix finish 1.2.1 -m "Hotfix 1.2.1"
+g fl support start 1.2.x v1.2.0
 
 # shorthands (current branch)
-git flow finish | update | rebase | publish | delete | rename NEW
+g fl finish | update | rebase | publish | delete | rename NEW
 
 # conflicts
-git flow finish --continue | --abort
+g fl finish --continue | --abort
 
 # config
-git flow config add|edit|rename|delete base|topic ...
+g fl config add|edit|rename|delete base|topic ...
 g config gitflow.branch.<type>.{prefix,parent,startpoint,upstreamstrategy,downstreamstrategy,tag,tagprefix,autoupdate,forcedelete}
 g config gitflow.<type>.<command>.<option>
 ```
